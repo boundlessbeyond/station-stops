@@ -39,6 +39,16 @@ internal class TrainStopService
             return $"This train stops at {servedStops[0].StationName} and {servedStops[1].StationName} only";
         }
 
+        var contiguousSegment = this.GetContiguousSegmentFromList(stations);
+        if (contiguousSegment != null)
+        {
+            var processedContiguous = contiguousSegment.Stations.ToList();
+            foreach (var station in processedContiguous)
+            {
+                stations.Remove(station);
+            }
+        }
+
         var expressSegmentsWithStops = this.GetExpressWithStopsSegment(stations);
         var processedExpressWithStopsStations = expressSegmentsWithStops.SelectMany(s => s.Stations).ToList();
 
@@ -47,11 +57,12 @@ internal class TrainStopService
         var processedExpressStations = pureExpressSegment.SelectMany(s => s.Stations).ToList();
 
         var toProcess = whatsLeft.Except(processedExpressStations).ToList();
-        var contiguousSegment = this.GetContiguousSegment(toProcess);
+        //var contiguousSegment = this.GetContiguousSegment(toProcess);
 
 
         var segments = expressSegmentsWithStops
             .Concat(pureExpressSegment).ToList();
+
         if (contiguousSegment != null)
         {
             var contiguousStations = contiguousSegment.Stations;
@@ -85,7 +96,7 @@ internal class TrainStopService
         {
             var expressStations = stations.Skip(stations.IndexOf(firstStop)).Take(stations.IndexOf(lastStop) + 1).ToList();
 
-            expressSegments.Add(new Segment(expressStations, firstStop.Index, lastStop.Index, true, false));
+            expressSegments.Add(new Segment(expressStations, true, false, false));
         }
 
         return expressSegments;
@@ -123,7 +134,7 @@ internal class TrainStopService
                 {
                     i += 3;
                     var expressStations = stations.Skip(firstStop.Index).Take(lastStop.Index + 1).ToList();
-                    expressSegments.Add(new Segment(expressStations, firstStop.Index, lastStop.Index, true, true));
+                    expressSegments.Add(new Segment(expressStations, true, true, false));
                 }
             }
             i++;
@@ -134,8 +145,6 @@ internal class TrainStopService
 
     public Segment? GetContiguousSegment(List<Station> stations)
     {
-        var contiguousSection = new List<Station>();
-
         var lastServedIndex = stations.FindLastIndex(s => s.StationStop);
 
         var truncatedStations = stations.Take(lastServedIndex + 1).ToList();
@@ -153,8 +162,20 @@ internal class TrainStopService
 
         if (contiguous)
         {
-            return new Segment(stopsInList, firstStop.Index, lastStop.Index, false, false);
+            return new Segment(stopsInList, false, false, true);
         }
+        return null;
+    }
+
+    public Segment? GetContiguousSegmentFromList(List<Station> stations)
+    {
+        var contiguousSection = FilterAdjacentItems(stations);
+
+        if (contiguousSection.Any())
+        {
+            return new Segment(contiguousSection, false, false, true);
+        }
+
         return null;
     }
 
@@ -163,29 +184,65 @@ internal class TrainStopService
         var output = string.Empty;
         var clauses = new List<string>();
 
-        foreach (var segment in segments)
+        var orderedSegments = segments.OrderBy(s => s.Order).ToList();
+        SetContiguousStatus(orderedSegments);
+
+        foreach (var segment in orderedSegments)
         {
-            if (segment is { Express: true, HasIntermediateStops: true })
+            // TODO: if the last station of the previous section equals the first station of the next section then no need to name it in the announcement
+
+            if (segment is { Express: true, HasIntermediateStops: true, IsPreviousContiguous: false })
             {
                 clauses.Add($"runs express from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[2].StationName}, stopping only at {segment.StoppingStations[1].StationName}");
-                continue;
             }
 
-            if (segment is { Express: true, HasIntermediateStops: false })
+            if (segment is { Express: true, HasIntermediateStops: false, IsPreviousContiguous: false })
             {
                 clauses.Add($"runs express from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[1].StationName}");
-                continue;
             }
 
-            if (segment is { Express: false, HasIntermediateStops: false })
+            if (segment is { Express: false, HasIntermediateStops: false, IsContiguous: true })
             {
                 clauses.Add($"runs from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[^1].StationName} stopping all stations");
+            }
+
+            if (segment is { IsPreviousContiguous: true })
+            {
+                clauses.Add($"runs express to {segment.StoppingStations.Last().StationName}");
+            }
+
+            if (segment is { IsNextContiguous: true })
+            {
+                clauses.Add($"runs express to {segment.StoppingStations.Last()}");
             }
         }
 
         var compoundDescription = "This train " + string.Join(" then ", clauses);
 
         return compoundDescription;
+    }
+
+    private void SetContiguousStatus(List<Segment> orderedSegments)
+    {
+        for (var i = 0; i < orderedSegments.Count; i++)
+        {
+            try
+            {
+                if (orderedSegments[i - 1].IsContiguous)
+                {
+                    orderedSegments[i].IsPreviousContiguous = true;
+                }
+
+                if (orderedSegments[i + 1].IsContiguous)
+                {
+                    orderedSegments[i].IsNextContiguous = true;
+                }
+            }
+            catch
+            {
+                // TODO: null checks on previous and next items in the list
+            }
+        }
     }
 
     private static bool IsContiguous(List<Station> stops)
@@ -200,13 +257,29 @@ internal class TrainStopService
         return true;
     }
 
-    public class Segment(List<Station> stations, int startIndex, int endIndex, bool express, bool hasIntermediateStops)
+    public static List<Station> FilterAdjacentItems(List<Station> stations)
     {
-        public List<Station> Stations { get; init; } = stations;
-        public List<Station> StoppingStations { get; init; } = stations.Where(s => s.StationStop).ToList();
-        public int StartIndex { get; init; } = startIndex;
-        public int EndIndex { get; init; } = endIndex;
-        public bool Express { get; init; } = express;
-        public bool HasIntermediateStops { get; init; } = hasIntermediateStops;
+        var lastServedIndex = stations.FindLastIndex(s => s.StationStop);
+        var truncatedStations = stations.Take(lastServedIndex + 1).ToList();
+        var firstStop = truncatedStations.First(s => s.StationStop);
+
+        List<Station> result = new List<Station>();
+        var searchList = stations.Skip(truncatedStations.IndexOf(firstStop) - 1).ToList();
+
+        for (int i = 0; i < searchList.Count; i++)
+        {
+            bool isAdjacentTrue = stations[i].StationStop == true && ((i > 0 && stations[i - 1].StationStop) || (i < stations.Count - 1 && stations[i + 1].StationStop));
+
+            if (isAdjacentTrue)
+            {
+                result.Add(stations[i]);
+            }
+            else
+            {
+                return result;
+            }
+        }
+
+        return result;
     }
 }
