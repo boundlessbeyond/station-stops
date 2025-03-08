@@ -57,8 +57,11 @@ internal class TrainStopService
         var processedExpressStations = pureExpressSegment.SelectMany(s => s.Stations).ToList();
 
         var toProcess = whatsLeft.Except(processedExpressStations).ToList();
-        //var contiguousSegment = this.GetContiguousSegment(toProcess);
 
+        if (contiguousSegment == null)
+        {
+            contiguousSegment = this.GetContiguousSegmentFromList(toProcess);
+        }
 
         var segments = expressSegmentsWithStops
             .Concat(pureExpressSegment).ToList();
@@ -186,7 +189,7 @@ internal class TrainStopService
 
         var orderedSegments = segments.OrderBy(s => s.Order).ToList();
         SetContiguousStatus(orderedSegments);
-
+        var index = 0;
         foreach (var segment in orderedSegments)
         {
             // TODO: if the last station of the previous section equals the first station of the next section then no need to name it in the announcement
@@ -203,18 +206,23 @@ internal class TrainStopService
 
             if (segment is { Express: false, HasIntermediateStops: false, IsContiguous: true })
             {
-                clauses.Add($"runs from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[^1].StationName} stopping all stations");
+                if (index == 0)
+                {
+                    clauses.Add(
+                        $"runs from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[^1].StationName} stopping all stations");
+                }
+
+                if (index == orderedSegments.Count - 1)
+                {
+                    clauses.Add($"runs to {segment.StoppingStations[^1].StationName} stopping all stations");
+                }
             }
 
-            if (segment is { IsPreviousContiguous: true })
+            if (segment is { IsContiguous: true })
             {
                 clauses.Add($"runs express to {segment.StoppingStations.Last().StationName}");
             }
-
-            if (segment is { IsNextContiguous: true })
-            {
-                clauses.Add($"runs express to {segment.StoppingStations.Last()}");
-            }
+            index++;
         }
 
         var compoundDescription = "This train " + string.Join(" then ", clauses);
@@ -261,6 +269,8 @@ internal class TrainStopService
     {
         var lastServedIndex = stations.FindLastIndex(s => s.StationStop);
         var truncatedStations = stations.Take(lastServedIndex + 1).ToList();
+        if (!truncatedStations.Any()) return stations;
+
         var firstStop = truncatedStations.First(s => s.StationStop);
 
         List<Station> result = new List<Station>();
