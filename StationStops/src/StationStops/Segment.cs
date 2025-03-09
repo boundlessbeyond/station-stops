@@ -16,5 +16,7 @@ public class Segment(
     public bool IsContiguous { get; } = isContiguous;
     public bool IsPreviousContiguous { get; set; }
     public bool IsNextContiguous { get; set; }
+    public bool IsPreviousExpress { get; set; }
+    public bool IsNextExpress { get; set; }
     public int Order => this.Stations?.FirstOrDefault()?.Index ?? 0;
 }

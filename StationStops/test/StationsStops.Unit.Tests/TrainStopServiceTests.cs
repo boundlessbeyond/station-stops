@@ -76,4 +76,16 @@ public class TrainStopServiceTests
         // ASSERT
         sut.Should().Be("This train runs from Central to Cannon Hill stopping all stations");
     }
+
+    [Fact]
+    public void TestExpressToContiguousStops()
+    {
+        // ARRANGE
+        var service = new TrainStopService();
+        // ACT
+        var sut = service.CalculateStops(DataProvider.ExpressStationsThenContiguous());
+
+        // ASSERT
+        sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs from Coorparoo to Cannon Hill stopping all stations");
+    }
 }

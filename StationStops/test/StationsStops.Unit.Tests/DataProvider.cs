@@ -85,6 +85,25 @@ public static class DataProvider
         return stations;
     }
 
+    public static List<Station> ExpressStationsThenContiguous()
+    {
+        var stations = new List<Station>
+        {
+            new("Central", true, 0),
+            new("Roma St", false, 1),
+            new("South Brisbane", false, 2),
+            new("South Bank", true, 3),
+            new("Park Road", false, 4),
+            new("Buranda", true, 5),
+            new("Coorparoo", true, 6),
+            new("Norman Park", true, 7),
+            new("Morningside", true, 8),
+            new("Cannon Hill", true, 9)
+        };
+
+        return stations;
+    }
+
     public static List<Station> GetExceptStations()
     {
         var stations = new List<Station>
