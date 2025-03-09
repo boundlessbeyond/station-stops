@@ -5,67 +5,59 @@ using System.Linq;
 namespace StationStops;
 public class TrainStopService
 {
+    public string GetAnnouncer(List<Station> stations)
+    {
+        var result = CheckSimpleCase(stations);
+        if (result != null)
+        {
+            return result;
+        }
+
+        List<Segment> journey = new();
+        while (stations.Any())
+        {
+            var journeySegment = this.CalculateStops(stations);
+            if (journeySegment != null)
+            {
+                journey.Add(journeySegment);
+                var processedStation = journeySegment.Stations.ToList();
+                foreach (var station in processedStation)
+                {
+                    stations.Remove(station);
+                }
+            }
+        }
+
+        return this.ProcessSegments(journey);
+    }
+
     /// <summary>
     /// Takes the list of stations in the journey and calculate where the train stops for the output string
     /// </summary>
     /// <param name="stations">List of Stations to calculate the announcers script from</param>
     /// <param name="firstPass">This method may be called recursively on more complex journeys so skip simple checks if not first pass</param>
     /// <returns>Train announcer script</returns>
-    public string CalculateStops(List<Station> stations, bool firstPass = true)
+    public Segment? CalculateStops(List<Station> stations)
     {
-        if (firstPass)
-        {
-            var result = CheckSimpleCase(stations);
-            if (!string.IsNullOrEmpty(result))
-            {
-                return result;
-            }
-        }
-
         var contiguousSegment = this.GetContiguousSegmentFromList(stations);
         if (contiguousSegment != null)
         {
-            var processedContiguous = contiguousSegment.Stations.ToList();
-            foreach (var station in processedContiguous)
-            {
-                stations.Remove(station);
-            }
+            return contiguousSegment;
         }
 
         var expressSegmentsWithStops = this.GetExpressWithStopsSegment(stations);
-        var processedExpressWithStopsStations = expressSegmentsWithStops.SelectMany(s => s.Stations).ToList();
-
-        var whatsLeft = stations.Except(processedExpressWithStopsStations).ToList();
-        var pureExpressSegment = this.GetPureExpressSegment(whatsLeft);
-        var processedExpressStations = pureExpressSegment.SelectMany(s => s.Stations).ToList();
-
-        var toProcess = whatsLeft.Except(processedExpressStations).ToList();
-
-        if (contiguousSegment == null)
+        if (expressSegmentsWithStops != null)
         {
-            // Check if there's a contiguous train service after the process express stops
-            contiguousSegment = this.GetContiguousSegmentFromList(toProcess);
+            return expressSegmentsWithStops;
         }
 
-        var segments = expressSegmentsWithStops
-            .Concat(pureExpressSegment).ToList();
-
-        if (contiguousSegment != null)
+        var pureExpressSegment = this.GetPureExpressSegment(stations);
+        if (pureExpressSegment != null)
         {
-            var contiguousStations = contiguousSegment.Stations;
-            var leftOver = toProcess.Except(contiguousStations).ToList();
-            if (leftOver.Any())
-            {
-                // if there are some stations left over try to reprocess from the beginning
-                this.CalculateStops(leftOver, false);
-            }
-
-            segments.Add(contiguousSegment);
+            return pureExpressSegment;
         }
 
-        var output = ProcessSegments(segments);
-
-        return output;
+        return null;
     }
 
     /// <summary>
@@ -73,9 +65,13 @@ public class TrainStopService
     /// </summary>
     /// <param name="stations">all stations to process</param>
     /// <returns>Simple announcer outcome from a limited list of stations or null if a more complex journey is found</returns>
-    public static string? CheckSimpleCase(List<Station> stations)
+    private static string? CheckSimpleCase(List<Station> stations)
     {
-        switch (stations.Count)
+        if ((stations?.Any() ?? false) == false)
+        {
+            return "No stations found in supplied list.";
+        }
+        switch (stations.Count(s => s.StationStop))
         {
             case < 1:
                 return "No station stops found in supplied list.";
@@ -113,10 +109,9 @@ public class TrainStopService
     /// </summary>
     /// <param name="stations">list of stations to check for an express segment</param>
     /// <returns>Express train journey segment</returns>
-    public List<Segment> GetPureExpressSegment(List<Station> stations)
+    public Segment? GetPureExpressSegment(List<Station> stations)
     {
-        var expressSegments = new List<Segment>();
-        if (!stations.Any()) return expressSegments;
+        if (!stations.Any()) return null;
 
         var lastStop = stations.Last(s => s.StationStop);
         var firstStop = stations.First(s => s.StationStop);
@@ -129,10 +124,10 @@ public class TrainStopService
         {
             var expressStations = stations.Skip(stations.IndexOf(firstStop)).Take(stations.IndexOf(lastStop) + 1).ToList();
 
-            expressSegments.Add(new Segment(expressStations, true, false, false));
+            return new Segment(expressStations, true, false, false);
         }
 
-        return expressSegments;
+        return null;
     }
 
     /// <summary>
@@ -140,13 +135,12 @@ public class TrainStopService
     /// </summary>
     /// <param name="stations">list of stations to check for an express with a stop segment</param>
     /// <returns>Express train journey segment</returns>
-    public List<Segment> GetExpressWithStopsSegment(List<Station> stations)
+    public Segment? GetExpressWithStopsSegment(List<Station> stations)
     {
         var lastServedIndex = stations.FindLastIndex(s => s.StationStop);
 
-        var expressSegments = new List<Segment>();
         var truncatedStations = stations.Take(lastServedIndex + 1).ToList();
-        if (!truncatedStations.Any()) return expressSegments;
+        if (!truncatedStations.Any()) return null;
 
         var servedStopsEffective = truncatedStations.Where(s => s.StationStop).ToList();
 
@@ -167,13 +161,13 @@ public class TrainStopService
                 {
                     i += 3;
                     var expressStations = stations.Skip(firstStop.Index).Take(lastStop.Index + 1).ToList();
-                    expressSegments.Add(new Segment(expressStations, true, true, false));
+                    return new Segment(expressStations, true, true, false);
                 }
             }
             i++;
         }
 
-        return expressSegments;
+        return null;
     }
 
     /// <summary>
@@ -198,7 +192,7 @@ public class TrainStopService
     /// </summary>
     /// <param name="segments">The train journey broken up in to segments of express segments and contiguous segments</param>
     /// <returns>Train announcer info of where the train stops</returns>
-    private string ProcessSegments(List<Segment> segments)
+    public string ProcessSegments(List<Segment> segments)
     {
         var output = string.Empty;
         var clauses = new List<string>();
@@ -228,6 +222,12 @@ public class TrainStopService
         var compoundDescription = "This train " + string.Join(" then ", clauses);
 
         return compoundDescription;
+    }
+
+    private string? ValidateStationList(List<Station> stations)
+    {
+
+        return null;
     }
 
     /// <summary>

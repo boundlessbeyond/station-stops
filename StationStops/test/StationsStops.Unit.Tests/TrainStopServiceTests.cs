@@ -11,7 +11,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.ExpressStationsWithStop());
+        var sut = service.GetAnnouncer(DataProvider.ExpressStationsWithStop());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank");
@@ -23,7 +23,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.ExpressStations());
+        var sut = service.GetAnnouncer(DataProvider.ExpressStations());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to South Bank");
@@ -35,7 +35,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.ExpressStationsThenExpress());
+        var sut = service.GetAnnouncer(DataProvider.ExpressStationsThenExpress());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs express from Coorparoo to Cannon Hill");
@@ -47,7 +47,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.OnlyStopsStations());
+        var sut = service.GetAnnouncer(DataProvider.OnlyStopsStations());
 
         // ASSERT
         sut.Should().Be("This train stops at Central and Roma St only");
@@ -59,7 +59,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.GetExceptStations());
+        var sut = service.GetAnnouncer(DataProvider.GetExceptStations());
 
         // ASSERT
         sut.Should().Be("This train stops at all stations except South Brisbane");
@@ -71,7 +71,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.ContiguousStationsStoppingAll());
+        var sut = service.GetAnnouncer(DataProvider.ContiguousStationsStoppingAll());
 
         // ASSERT
         sut.Should().Be("This train runs from Central to Cannon Hill stopping all stations");
@@ -83,7 +83,7 @@ public class TrainStopServiceTests
         // ARRANGE
         var service = new TrainStopService();
         // ACT
-        var sut = service.CalculateStops(DataProvider.ExpressStationsThenContiguous());
+        var sut = service.GetAnnouncer(DataProvider.ExpressStationsThenContiguous());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs from Coorparoo to Cannon Hill stopping all stations");
