@@ -265,7 +265,7 @@ public class TrainStopService
     }
 
     /// <summary>
-    /// Loop through all segments, mark if the previous/next segment of the train journey is contiguous (stops all stations)
+    /// Loop through all segments, mark if the previous/next segment of the train journey is contiguous (stops all stations) or express
     /// </summary>
     /// <param name="orderedSegments"></param>
     private void SetContiguousStatus(List<Segment> orderedSegments)
