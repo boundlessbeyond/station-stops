@@ -211,16 +211,16 @@ public class TrainStopService
                         $"runs from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[^1].StationName} stopping all stations");
                 }
 
-                if (index == orderedSegments.Count - 1)
-                {
-                    clauses.Add($"runs to {segment.StoppingStations[^1].StationName} stopping all stations");
-                }
+                //else if (index == orderedSegments.Count - 1)
+                //{
+                //    clauses.Add($"runs to {segment.StoppingStations[^1].StationName} stopping all stations");
+                //}
             }
 
-            if (segment is { IsContiguous: true })
-            {
-                clauses.Add($"runs express to {segment.StoppingStations.Last().StationName}");
-            }
+            //if (segment is { Express: true, IsPreviousContiguous: true })
+            //{
+            //    clauses.Add($"runs express to {segment.StoppingStations.Last().StationName}");
+            //}
             index++;
         }
 
@@ -233,21 +233,17 @@ public class TrainStopService
     {
         for (var i = 0; i < orderedSegments.Count; i++)
         {
-            try
+            if (i > 0 && orderedSegments[i - 1].IsContiguous)
             {
-                if (orderedSegments[i - 1].IsContiguous)
-                {
-                    orderedSegments[i].IsPreviousContiguous = true;
-                }
-
-                if (orderedSegments[i + 1].IsContiguous)
-                {
-                    orderedSegments[i].IsNextContiguous = true;
-                }
+                orderedSegments[i].IsPreviousContiguous = true;
             }
-            catch
+
+            var nextSegment = i + 1;
+            if (nextSegment >= orderedSegments.Count) continue;
+
+            if (orderedSegments[nextSegment].IsContiguous)
             {
-                // TODO: null checks on previous and next items in the list
+                orderedSegments[i].IsNextContiguous = true;
             }
         }
     }

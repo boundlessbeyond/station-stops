@@ -41,7 +41,6 @@ public class TrainStopServiceTests
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs express from Coorparoo to Cannon Hill");
     }
 
-
     [Fact]
     public void TestOnlyStops()
     {
@@ -64,5 +63,17 @@ public class TrainStopServiceTests
 
         // ASSERT
         sut.Should().Be("This train stops at all stations except South Brisbane");
+    }
+
+    [Fact]
+    public void TestContiguousStops()
+    {
+        // ARRANGE
+        var service = new TrainStopService();
+        // ACT
+        var sut = service.CalculateStops(DataProvider.ContiguousStationsStoppingAll());
+
+        // ASSERT
+        sut.Should().Be("This train runs from Central to Cannon Hill stopping all stations");
     }
 }
