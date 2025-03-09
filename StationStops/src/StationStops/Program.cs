@@ -82,3 +82,5 @@ internal class Program
         Console.ReadLine();
     }
 }
+
+// TODO: Contiguous segment then an express segment - process the stations in the order of their index

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace StationStops;
-internal class TrainStopService
+public class TrainStopService
 {
     public string CalculateStops(List<Station> stations)
     {
@@ -33,8 +33,7 @@ internal class TrainStopService
             var expressStation = truncatedStations.First(s => !s.StationStop);
             return $"This train stops at all stations except {expressStation.StationName}";
         }
-
-        if (servedStops.Count is 2)
+        if (expressCountOverall is 0 && servedStops.Count is 2)
         {
             return $"This train stops at {servedStops[0].StationName} and {servedStops[1].StationName} only";
         }

@@ -4,7 +4,7 @@ South Brisbane, False
 South Bank, True 
 Park Road, False 
 Buranda, True
-Cooparoo, True
+Coorparoo, True
 Norman Park, True
 Morningside, True
 Cannon Hill, True
