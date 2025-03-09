@@ -74,13 +74,10 @@ internal class Program
             lineNumber++;
         }
 
-        //var output = expressService.Calculate3(stations);
-        var output = service.CalculateStops(stations);
+        var output = service.GetAnnouncer(stations);
 
         Console.WriteLine(output);
         Console.WriteLine("Press 'enter' to end program");
         Console.ReadLine();
     }
 }
-
-// TODO: Contiguous segment then an express segment - process the stations in the order of their index
