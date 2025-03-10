@@ -230,8 +230,7 @@ public class TrainStopService
             return "No train journey found to process.";
         }
 
-        var output = string.Empty;
-        var clauses = new List<string>();
+        List<string> clauses = new();
 
         var orderedSegments = segments.OrderBy(s => s.Order).ToList();
         SetContiguousStatus(orderedSegments);
@@ -269,6 +268,8 @@ public class TrainStopService
         var firstStation = stations.First();
         if ((firstStation?.StationStop ?? false) == false)
         {
+            // TODO: assumption - that the first "station" (rather than "stop") must be a stopping station:
+            // spec: "• The first stop in the stop sequence will always be a stopping station."
             return ValidationResult.Failure("The journey must start with a station stop.");
         }
 
