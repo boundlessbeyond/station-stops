@@ -22,7 +22,7 @@ internal class Program
 
         var stations = Helpers.GetStations(path);
 
-        var output = service.GetAnnouncer(stations);
+        var output = service.GetAnnouncement(stations);
 
         Console.WriteLine(output);
         Console.WriteLine("Press 'enter' to end program");

@@ -6,7 +6,7 @@ using StationStops.Validation;
 namespace StationStops;
 public class TrainStopService
 {
-    public string GetAnnouncer(List<Station> stations)
+    public string GetAnnouncement(List<Station> stations)
     {
         var validationResult = ValidateStationList(stations);
         if (!validationResult.Success)
@@ -52,9 +52,8 @@ public class TrainStopService
     /// Takes the list of stations in the journey and calculate where the train stops for the output string
     /// </summary>
     /// <param name="stations">List of Stations to calculate the announcers script from</param>
-    /// <param name="firstPass">This method may be called recursively on more complex journeys so skip simple checks if not first pass</param>
-    /// <returns>Train announcer script</returns>
-    public Segment? CalculateStops(List<Station> stations)
+    /// <returns>Train journey segment</returns>
+    private Segment? CalculateStops(List<Station> stations)
     {
         var validationResult = ValidateStationList(stations);
         if (!validationResult.Success)
@@ -83,7 +82,7 @@ public class TrainStopService
     /// </summary>
     /// <param name="stations">list of stations to check for an express segment</param>
     /// <returns>Express train journey segment</returns>
-    public Segment? GetPureExpressSegment(List<Station> stations)
+    private Segment? GetPureExpressSegment(List<Station> stations)
     {
         var validationResult = ValidateStationList(stations);
         if (!validationResult.Success)
@@ -113,7 +112,7 @@ public class TrainStopService
     /// </summary>
     /// <param name="stations">list of stations to check for an express with a stop segment</param>
     /// <returns>Express with stop train journey segment</returns>
-    public Segment? GetExpressWithStopsSegment(List<Station> stations)
+    private Segment? GetExpressWithStopsSegment(List<Station> stations)
     {
         var validationResult = ValidateStationList(stations);
         if (!validationResult.Success)
@@ -158,7 +157,7 @@ public class TrainStopService
     /// </summary>
     /// <param name="stations">List of stations to find the list of contiguous stopping stations in</param>
     /// <returns>Train journey segment or null if no contiguous station stops are found</returns>
-    public Segment? GetContiguousSegmentFromList(List<Station> stations)
+    private Segment? GetContiguousSegmentFromList(List<Station> stations)
     {
         var validationResult = ValidateStationList(stations);
         if (!validationResult.Success)
@@ -181,7 +180,7 @@ public class TrainStopService
     /// </summary>
     /// <param name="segments">The train journey broken up in to segments of express segments and contiguous segments</param>
     /// <returns>Train announcer info of where the train stops</returns>
-    public string ProcessSegments(List<Segment> segments)
+    private string ProcessSegments(List<Segment> segments)
     {
         if ((segments?.Any() ?? false) == false)
         {
@@ -250,6 +249,11 @@ public class TrainStopService
         return null;
     }
 
+    /// <summary>
+    /// Validate the station list to ensure the rules defined in the spec are met
+    /// </summary>
+    /// <param name="stations">list of stations</param>
+    /// <returns>Validation Result with an error message if a rule is broken</returns>
     private static ValidationResult ValidateStationList(List<Station>? stations)
     {
         if ((stations?.Any() ?? false) == false)

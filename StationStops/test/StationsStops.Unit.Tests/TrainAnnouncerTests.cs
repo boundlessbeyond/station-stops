@@ -12,7 +12,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.ExpressStationsWithStop());
+        var sut = service.GetAnnouncement(DataProvider.ExpressStationsWithStop());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank");
@@ -25,7 +25,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.ExpressStations());
+        var sut = service.GetAnnouncement(DataProvider.ExpressStations());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to South Bank");
@@ -38,7 +38,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.ExpressStationsThenExpress());
+        var sut = service.GetAnnouncement(DataProvider.ExpressStationsThenExpress());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs express from Coorparoo to Cannon Hill");
@@ -51,7 +51,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.OnlyStopsStations());
+        var sut = service.GetAnnouncement(DataProvider.OnlyStopsStations());
 
         // ASSERT
         sut.Should().Be("This train stops at Central and Roma St only");
@@ -64,7 +64,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.GetExceptStations());
+        var sut = service.GetAnnouncement(DataProvider.GetExceptStations());
 
         // ASSERT
         sut.Should().Be("This train stops at all stations except South Brisbane");
@@ -77,7 +77,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.ContiguousStationsStoppingAll());
+        var sut = service.GetAnnouncement(DataProvider.ContiguousStationsStoppingAll());
 
         // ASSERT
         sut.Should().Be("This train runs from Central to Cannon Hill stopping all stations");
@@ -90,7 +90,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.ExpressStationsThenContiguous());
+        var sut = service.GetAnnouncement(DataProvider.ExpressStationsThenContiguous());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs from Coorparoo to Cannon Hill stopping all stations");
@@ -103,7 +103,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.GetJourneyWithoutEnd());
+        var sut = service.GetAnnouncement(DataProvider.GetJourneyWithoutEnd());
 
         // ASSERT
         sut.Should().Be("This train runs from Central to South Bank stopping all stations", because: "There is a station after South Bank bet we ignore it as we don't stop there");
@@ -116,7 +116,7 @@ public class TrainAnnouncerTests
         var service = new TrainStopService();
 
         // ACT
-        var sut = service.GetAnnouncer(DataProvider.GetJourneyWithoutStart());
+        var sut = service.GetAnnouncement(DataProvider.GetJourneyWithoutStart());
 
         // ASSERT
         sut.Should().Be("The journey must start with a station stop.", because: "The journey contains no station stops");
