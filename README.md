@@ -17,3 +17,6 @@ Park Road, False
 Buranda, True
 
 See example text files in the root directly of this project.
+
+## Unit tests
+There is a unit test project included in the solution. Prefer Resharper Unit Test runner from within Visual Studio (2022) to run the tests. Alternatively use Visual Studio test runner or the dotnet cli.
