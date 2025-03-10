@@ -3,13 +3,14 @@ using StationStops;
 
 namespace StationsStops.Unit.Tests;
 
-public class TrainStopServiceTests
+public class TrainAnnouncerTests
 {
     [Fact]
     public void TestExpressWithStop()
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.ExpressStationsWithStop());
 
@@ -22,6 +23,7 @@ public class TrainStopServiceTests
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.ExpressStations());
 
@@ -34,6 +36,7 @@ public class TrainStopServiceTests
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.ExpressStationsThenExpress());
 
@@ -46,6 +49,7 @@ public class TrainStopServiceTests
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.OnlyStopsStations());
 
@@ -58,6 +62,7 @@ public class TrainStopServiceTests
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.GetExceptStations());
 
@@ -70,6 +75,7 @@ public class TrainStopServiceTests
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.ContiguousStationsStoppingAll());
 
@@ -82,10 +88,37 @@ public class TrainStopServiceTests
     {
         // ARRANGE
         var service = new TrainStopService();
+
         // ACT
         var sut = service.GetAnnouncer(DataProvider.ExpressStationsThenContiguous());
 
         // ASSERT
         sut.Should().Be("This train runs express from Central to Buranda, stopping only at South Bank then runs from Coorparoo to Cannon Hill stopping all stations");
+    }
+
+    [Fact]
+    public void TestJourneyWithNoEnd()
+    {
+        // ARRANGE
+        var service = new TrainStopService();
+
+        // ACT
+        var sut = service.GetAnnouncer(DataProvider.GetJourneyWithoutEnd());
+
+        // ASSERT
+        sut.Should().Be("This train runs from Central to South Bank stopping all stations", because: "There is a station after South Bank bet we ignore it as we don't stop there");
+    }
+
+    [Fact]
+    public void TestJourneyWithNoStart()
+    {
+        // ARRANGE
+        var service = new TrainStopService();
+
+        // ACT
+        var sut = service.GetAnnouncer(DataProvider.GetJourneyWithoutStart());
+
+        // ASSERT
+        sut.Should().Be("The journey must start with a station stop.", because: "The journey contains no station stops");
     }
 }

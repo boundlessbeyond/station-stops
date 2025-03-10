@@ -1,12 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using StationStops.Validation;
 
 namespace StationStops;
 public class TrainStopService
 {
     public string GetAnnouncer(List<Station> stations)
     {
+        var validationResult = ValidateStationList(stations);
+        if (!validationResult.Success)
+        {
+            return validationResult.ErrorMessage!;
+        }
+
+        var lastStopIndex = stations.FindLastIndex(s => s.StationStop);
+        if (lastStopIndex > -1)
+        {
+            lastStopIndex += 1;
+            var stationsToIgnore = stations.Count - lastStopIndex;
+            if (stationsToIgnore > 0)
+            {
+                stations.RemoveRange(lastStopIndex, stationsToIgnore);
+            }
+        }
+
         var result = CheckSimpleCase(stations);
         if (result != null)
         {
@@ -39,6 +57,12 @@ public class TrainStopService
     /// <returns>Train announcer script</returns>
     public Segment? CalculateStops(List<Station> stations)
     {
+        var validationResult = ValidateStationList(stations);
+        if (!validationResult.Success)
+        {
+            return null;
+        }
+
         var contiguousSegment = this.GetContiguousSegmentFromList(stations);
         if (contiguousSegment != null)
         {
@@ -67,24 +91,15 @@ public class TrainStopService
     /// <returns>Simple announcer outcome from a limited list of stations or null if a more complex journey is found</returns>
     private static string? CheckSimpleCase(List<Station> stations)
     {
-        if ((stations?.Any() ?? false) == false)
+        var validationResult = ValidateStationList(stations);
+        if (!validationResult.Success)
         {
-            return "No stations found in supplied list.";
-        }
-        switch (stations.Count(s => s.StationStop))
-        {
-            case < 1:
-                return "No station stops found in supplied list.";
-            case < 2:
-                return "Please supply more than one station stop.";
+            return validationResult.ErrorMessage;
         }
 
         // Truncate the list after the last stopping station.
         var lastStopIndex = stations.FindLastIndex(s => s.StationStop);
-        if (lastStopIndex == -1)
-        {
-            return "There must be at least one stopping station.";
-        }
+
         var truncatedStations = stations.Take(lastStopIndex + 1).ToList();
 
         var servedStops = truncatedStations.Where(s => s.StationStop).ToList();
@@ -111,7 +126,11 @@ public class TrainStopService
     /// <returns>Express train journey segment</returns>
     public Segment? GetPureExpressSegment(List<Station> stations)
     {
-        if (!stations.Any()) return null;
+        var validationResult = ValidateStationList(stations);
+        if (!validationResult.Success)
+        {
+            return null;
+        }
 
         var lastStop = stations.Last(s => s.StationStop);
         var firstStop = stations.First(s => s.StationStop);
@@ -137,6 +156,12 @@ public class TrainStopService
     /// <returns>Express train journey segment</returns>
     public Segment? GetExpressWithStopsSegment(List<Station> stations)
     {
+        var validationResult = ValidateStationList(stations);
+        if (!validationResult.Success)
+        {
+            return null;
+        }
+
         var lastServedIndex = stations.FindLastIndex(s => s.StationStop);
 
         var truncatedStations = stations.Take(lastServedIndex + 1).ToList();
@@ -177,6 +202,12 @@ public class TrainStopService
     /// <returns>Train journey segment or null if no contiguous station stops are found</returns>
     public Segment? GetContiguousSegmentFromList(List<Station> stations)
     {
+        var validationResult = ValidateStationList(stations);
+        if (!validationResult.Success)
+        {
+            return null;
+        }
+
         var contiguousSection = Helpers.FilterAdjacentItems(stations);
 
         if (contiguousSection.Any())
@@ -194,12 +225,17 @@ public class TrainStopService
     /// <returns>Train announcer info of where the train stops</returns>
     public string ProcessSegments(List<Segment> segments)
     {
+        if ((segments?.Any() ?? false) == false)
+        {
+            return "No train journey found to process.";
+        }
+
         var output = string.Empty;
         var clauses = new List<string>();
 
         var orderedSegments = segments.OrderBy(s => s.Order).ToList();
         SetContiguousStatus(orderedSegments);
-        var index = 0;
+
         foreach (var segment in orderedSegments)
         {
             if (segment is { Express: true, HasIntermediateStops: true, IsPreviousContiguous: false })
@@ -216,7 +252,6 @@ public class TrainStopService
             {
                 clauses.Add($"runs from {segment.StoppingStations[0].StationName} to {segment.StoppingStations[^1].StationName} stopping all stations");
             }
-            index++;
         }
 
         var compoundDescription = "This train " + string.Join(" then ", clauses);
@@ -224,10 +259,25 @@ public class TrainStopService
         return compoundDescription;
     }
 
-    private string? ValidateStationList(List<Station> stations)
+    private static ValidationResult ValidateStationList(List<Station>? stations)
     {
+        if ((stations?.Any() ?? false) == false)
+        {
+            return ValidationResult.Failure("No stations found in supplied list.");
+        }
 
-        return null;
+        var firstStation = stations.First();
+        if ((firstStation?.StationStop ?? false) == false)
+        {
+            return ValidationResult.Failure("The journey must start with a station stop.");
+        }
+
+        return stations.Count(s => s.StationStop) switch
+        {
+            < 1 => ValidationResult.Failure("No station stops found in supplied list."),
+            < 2 => ValidationResult.Failure("Please supply more than one station stop."),
+            _ => ValidationResult.Successful
+        };
     }
 
     /// <summary>

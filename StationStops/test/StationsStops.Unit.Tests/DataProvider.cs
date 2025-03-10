@@ -116,4 +116,32 @@ public static class DataProvider
 
         return stations;
     }
+
+    public static List<Station> GetJourneyWithoutEnd()
+    {
+        var stations = new List<Station>
+        {
+            new("Central", true, 0),
+            new("Roma St", true, 1),
+            new("South Brisbane", true, 2),
+            new("South Bank", true, 3),
+            new("Park Road", false, 4),
+        };
+
+        return stations;
+    }
+
+    public static List<Station> GetJourneyWithoutStart()
+    {
+        var stations = new List<Station>
+        {
+            new("Central", false, 0),
+            new("Roma St", false, 1),
+            new("South Brisbane", false, 2),
+            new("South Bank", false, 3),
+            new("Park Road", false, 4),
+        };
+
+        return stations;
+    }
 }
