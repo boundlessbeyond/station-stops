@@ -1,0 +1,10 @@
+Central, True 
+Roma St, True
+South Brisbane, True
+South Bank, True 
+Park Road, True 
+Buranda, True
+Cooparoo, True
+Norman Park, False
+Morningside, False
+Cannon Hill, True
